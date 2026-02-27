@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Spese</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0c0c0e;
+    --surface: #141417;
+    --surface2: #1c1c21;
+    --border: #2a2a32;
+    --accent: #c8f135;
+    --accent-dim: rgba(200,241,53,0.12);
+    --accent-mid: rgba(200,241,53,0.3);
+    --danger: #ff5c5c;
+    --danger-dim: rgba(255,92,92,0.12);
+    --text: #f0f0f0;
+    --muted: #6b6b7a;
+    --muted2: #9898a8;
+    --radius: 16px;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ---- HEADER ---- */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(12,12,14,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .header-actions { display: flex; gap: 8px; }
+
+  /* ---- BUTTONS ---- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--muted2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--border); color: var(--text); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #0c0c0e;
+    font-weight: 700;
+  }
+  .btn-accent:hover { background: #d9ff3d; transform: translateY(-1px); }
+  .btn-accent:active { transform: translateY(0); }
+
+  .btn-danger {
+    background: var(--danger-dim);
+    color: var(--danger);
+    border: 1px solid rgba(255,92,92,0.2);
+    padding: 4px 10px;
+    font-size: 0.7rem;
+  }
+
+  /* ---- MAIN ---- */
+  main { padding: 20px 16px 120px; max-width: 480px; margin: 0 auto; }
+
+  /* ---- MONTH NAV ---- */
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .month-label {
+    font-family: var(--font-head);
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .month-label.no-data { color: var(--muted); }
+
+  .nav-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted2);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .nav-btn:hover:not(:disabled) { background: var(--border); color: var(--text); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* ---- CARDS ---- */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .card.full { grid-column: 1 / -1; }
+
+  .card-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .card-value {
+    font-size: 1.6rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .card-value.accent { color: var(--accent); }
+  .card-value.danger { color: var(--danger); }
+  .card-value.small { font-size: 1.2rem; }
+
+  .residuo-card {
+    background: var(--accent-dim);
+    border-color: var(--accent-mid);
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  .residuo-card.negative {
+    background: var(--danger-dim);
+    border-color: rgba(255,92,92,0.3);
+  }
+
+  .residuo-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .residuo-bar {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--accent);
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .residuo-bar.danger { background: var(--danger); }
+
+  /* ---- NO DATA STATE ---- */
+  .no-data-card {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .no-data-card p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+  .no-data-card .icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.4; }
+
+  /* ---- CHART ---- */
+  .chart-card { padding: 16px; }
+  .chart-wrap { position: relative; height: 180px; margin-top: 12px; }
+
+  /* ---- ADD EXPENSE ---- */
+  .add-section {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+    color: var(--muted2);
+  }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .input-wrap { flex: 1; position: relative; }
+
+  .input-wrap label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .euro-prefix {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  .has-prefix input { padding-left: 26px; }
+
+  /* ---- EXPENSE LIST ---- */
+  .expense-list { margin-top: 20px; }
+
+  .expense-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .expense-left { flex: 1; min-width: 0; }
+
+  .expense-note {
+    font-size: 0.85rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .expense-date {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .expense-amount {
+    font-size: 0.95rem;
+    color: var(--danger);
+    font-weight: 500;
+    margin: 0 12px;
+    white-space: nowrap;
+  }
+
+  /* ---- CSV MODAL ---- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin: 0 auto 20px;
+  }
+
+  .modal h2 {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .modal p {
+    font-size: 0.78rem;
+    color: var(--muted2);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .modal code {
+    display: block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+    line-height: 1.8;
+    white-space: pre;
+  }
+
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .file-drop:hover, .file-drop.dragover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .file-drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .file-drop p { color: var(--muted2); font-size: 0.8rem; margin: 0; }
+  .file-drop .icon { font-size: 1.8rem; margin-bottom: 8px; }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    z-index: 300;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--accent-mid); color: var(--accent); }
+  .toast.error { border-color: rgba(255,92,92,0.3); color: var(--danger); }
+
+  /* ---- EMPTY LIST ---- */
+  .empty-list {
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">budget<span>.</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" id="openCsvBtn">📂 Carica CSV</button>
+  </div>
+</header>
+
+<main>
+  <!-- Month navigation -->
+  <div class="month-nav">
+    <button class="nav-btn" id="prevBtn">‹</button>
+    <div class="month-label" id="monthLabel">—</div>
+    <button class="nav-btn" id="nextBtn">›</button>
+  </div>
+
+  <!-- Cards -->
+  <div id="mainContent"></div>
+
+  <!-- Add expense -->
+  <div class="add-section" id="addSection" style="display:none">
+    <div class="section-title">+ Nuova spesa</div>
+    <div class="form-row">
+      <div class="input-wrap has-prefix" style="flex:0 0 130px">
+        <label>Importo</label>
+        <span class="euro-prefix">€</span>
+        <input type="number" id="inputAmount" min="0.01" step="0.01" placeholder="0.00">
+      </div>
+      <div class="input-wrap">
+        <label>Nota</label>
+        <input type="text" id="inputNote" placeholder="es. cena fuori" maxlength="50">
+      </div>
+    </div>
+    <button class="btn btn-accent" id="addBtn" style="width:100%">Aggiungi spesa</button>
+  </div>
+
+  <!-- Expense list -->
+  <div class="expense-list" id="expenseList"></div>
+</main>
+
+<!-- CSV Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Carica il tuo CSV</h2>
+    <p>Il file deve avere due colonne: <strong>Mese</strong> e <strong>Residuo</strong>. I mesi devono essere in italiano con la prima lettera maiuscola.</p>
+    <code>Mese,Residuo
+Gennaio,1250.00
+Febbraio,980.50
+Marzo,1100.00
+...
+Dicembre,1050.00</code>
+    <div class="file-drop" id="fileDrop">
+      <input type="file" id="fileInput" accept=".csv,.txt">
+      <div class="icon">📄</div>
+      <p>Tocca per selezionare il file CSV</p>
+    </div>
+    <button class="btn btn-ghost" id="closeModal" style="width:100%;margin-top:12px">Annulla</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+const LS_BUDGET = 'budget_residui';
+const LS_EXPENSES = 'budget_spese';
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let residui = JSON.parse(localStorage.getItem(LS_BUDGET) || '{}');
+let spese   = JSON.parse(localStorage.getItem(LS_EXPENSES) || '{}');
+
+const now = new Date();
+let currentMonthIdx = now.getMonth(); // 0-11
+
+let chartInstance = null;
+
+// ─── Persist ─────────────────────────────────────────────────────────────────
+function saveSpese() { localStorage.setItem(LS_EXPENSES, JSON.stringify(spese)); }
+function saveResidui() { localStorage.setItem(LS_BUDGET, JSON.stringify(residui)); }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function fmt(n) {
+  return '€ ' + Math.abs(n).toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function fmtSigned(n) {
+  const s = n < 0 ? '−' : '';
+  return s + fmt(n);
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  const month = MONTHS[currentMonthIdx];
+  const label = document.getElementById('monthLabel');
+  label.textContent = month;
+
+  const content = document.getElementById('mainContent');
+  const addSection = document.getElementById('addSection');
+  const expenseList = document.getElementById('expenseList');
+
+  // Nav buttons
+  const hasAnyData = Object.keys(residui).length > 0;
+  document.getElementById('prevBtn').disabled = currentMonthIdx === 0;
+  document.getElementById('nextBtn').disabled = currentMonthIdx === 11;
+
+  if (!hasAnyData) {
+    label.classList.add('no-data');
+    addSection.style.display = 'none';
+    content.innerHTML = `
+      <div class="no-data-card">
+        <div class="icon">📊</div>
+        <p>Nessun dato caricato.<br>Carica il tuo file CSV con i residui mensili per iniziare.</p>
+      </div>`;
+    expenseList.innerHTML = '';
+    return;
+  }
+
+  label.classList.remove('no-data');
+
+  const base = residui[month] ?? null;
+  const meseSpese = spese[month] || [];
+  const totaleExtra = meseSpese.reduce((s, e) => s + e.amount, 0);
+  const rimanente = base !== null ? base - totaleExtra : null;
+
+  if (base === null) {
+    content.innerHTML = `
+      <div class="no-data-card">
+        <div class="icon">❓</div>
+        <p>Nessun residuo definito per <strong>${month}</strong>.<br>Controlla il tuo CSV.</p>
+      </div>`;
+    addSection.style.display = 'none';
+    expenseList.innerHTML = '';
+    return;
+  }
+
+  addSection.style.display = 'block';
+
+  // Percentage remaining
+  const pct = base > 0 ? Math.max(0, Math.min(100, (rimanente / base) * 100)) : 0;
+  const isNeg = rimanente < 0;
+
+  content.innerHTML = `
+    <div class="cards-grid">
+      <div class="card residuo-card ${isNeg ? 'negative' : ''}">
+        <div>
+          <div class="card-label">Residuo disponibile</div>
+          <div class="card-value ${isNeg ? 'danger' : 'accent'}">${fmtSigned(rimanente)}</div>
+          <div class="residuo-bar-wrap">
+            <div class="residuo-bar ${isNeg ? 'danger' : ''}" style="width:${pct}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Base mese</div>
+        <div class="card-value small">${fmt(base)}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Speso (extra)</div>
+        <div class="card-value small ${totaleExtra > 0 ? 'danger' : ''}">${fmt(totaleExtra)}</div>
+      </div>
+    </div>
+
+    <div class="card chart-card full">
+      <div class="card-label">Andamento residuo</div>
+      <div class="chart-wrap"><canvas id="myChart"></canvas></div>
+    </div>`;
+
+  // Build chart data: start with base, subtract each expense chronologically
+  renderChart(base, meseSpese);
+
+  // Expense list
+  if (meseSpese.length === 0) {
+    expenseList.innerHTML = '<div class="empty-list">Nessuna spesa extra questo mese 🎉</div>';
+  } else {
+    expenseList.innerHTML = meseSpese.map((e, i) => `
+      <div class="expense-item">
+        <div class="expense-left">
+          <div class="expense-note">${escHtml(e.note || '—')}</div>
+          <div class="expense-date">${e.date}</div>
+        </div>
+        <div class="expense-amount">−${fmt(e.amount)}</div>
+        <button class="btn btn-danger" onclick="deleteExpense(${i})">✕</button>
+      </div>`).join('');
+  }
+}
+
+function renderChart(base, meseSpese) {
+  const canvas = document.getElementById('myChart');
+  if (!canvas) return;
+
+  // Sort expenses by date
+  const sorted = [...meseSpese].sort((a,b) => new Date(a.rawDate) - new Date(b.rawDate));
+
+  const labels = ['Inizio'];
+  const data = [base];
+
+  let running = base;
+  sorted.forEach(e => {
+    running -= e.amount;
+    labels.push(e.date.split(' ')[0]);
+    data.push(parseFloat(running.toFixed(2)));
+  });
+
+  const isNeg = data[data.length - 1] < 0;
+  const lineColor = isNeg ? '#ff5c5c' : '#c8f135';
+
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  const ctx = canvas.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0, isNeg ? 'rgba(255,92,92,0.3)' : 'rgba(200,241,53,0.3)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: lineColor,
+        borderWidth: 2,
+        backgroundColor: grad,
+        pointBackgroundColor: lineColor,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: {
+          label: ctx => ' ' + fmt(ctx.parsed.y)
+        },
+        bodyFont: { family: 'DM Mono' },
+        backgroundColor: '#1c1c21',
+        borderColor: '#2a2a32',
+        borderWidth: 1,
+        titleColor: '#9898a8',
+        bodyColor: '#f0f0f0',
+      }},
+      scales: {
+        x: { ticks: { color: '#6b6b7a', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1c1c21' } },
+        y: { ticks: { color: '#6b6b7a', font: { family: 'DM Mono', size: 10 },
+               callback: v => '€' + v.toLocaleString('it-IT') },
+             grid: { color: '#1c1c21' } }
+      }
+    }
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Add / Delete expense ─────────────────────────────────────────────────────
+document.getElementById('addBtn').addEventListener('click', () => {
+  const amountInput = document.getElementById('inputAmount');
+  const noteInput   = document.getElementById('inputNote');
+  const amount = parseFloat(amountInput.value);
+  const note = noteInput.value.trim();
+
+  if (!amount || amount <= 0) { showToast('Inserisci un importo valido', 'error'); return; }
+
+  const month = MONTHS[currentMonthIdx];
+  if (!spese[month]) spese[month] = [];
+
+  const now = new Date();
+  const day = now.getDate().toString().padStart(2,'0');
+  const mon = (now.getMonth()+1).toString().padStart(2,'0');
+
+  spese[month].push({
+    amount: parseFloat(amount.toFixed(2)),
+    note: note || 'Spesa',
+    date: `${day}/${mon}`,
+    rawDate: now.toISOString()
+  });
+
+  saveSpese();
+  amountInput.value = '';
+  noteInput.value = '';
+  showToast('Spesa aggiunta ✓');
+  render();
+});
+
+window.deleteExpense = function(i) {
+  const month = MONTHS[currentMonthIdx];
+  spese[month].splice(i, 1);
+  saveSpese();
+  showToast('Spesa rimossa');
+  render();
+};
+
+// ─── Month nav ────────────────────────────────────────────────────────────────
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentMonthIdx > 0) { currentMonthIdx--; render(); }
+});
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentMonthIdx < 11) { currentMonthIdx++; render(); }
+});
+
+// ─── Enter key on inputs ─────────────────────────────────────────────────────
+['inputAmount','inputNote'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('addBtn').click();
+  });
+});
+
+// ─── CSV Modal ────────────────────────────────────────────────────────────────
+document.getElementById('openCsvBtn').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.add('open');
+});
+
+document.getElementById('closeModal').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('open');
+});
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+});
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  parseCsvFile(file);
+  e.target.value = '';
+});
+
+const fileDrop = document.getElementById('fileDrop');
+fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+fileDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  fileDrop.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) parseCsvFile(file);
+});
+
+function parseCsvFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result;
+    const lines = text.trim().split(/\r?\n/);
+    let parsed = {};
+    let errors = 0;
+
+    lines.forEach((line, idx) => {
+      if (idx === 0 && line.toLowerCase().includes('mese')) return; // skip header
+      const parts = line.split(/[,;]/);
+      if (parts.length < 2) return;
+      const mese = parts[0].trim();
+      const val = parseFloat(parts[1].replace(',','.').trim());
+      if (MONTHS.includes(mese) && !isNaN(val)) {
+        parsed[mese] = val;
+      } else { errors++; }
+    });
+
+    if (Object.keys(parsed).length === 0) {
+      showToast('Nessun dato valido trovato', 'error');
+      return;
+    }
+
+    residui = parsed;
+    saveResidui();
+    document.getElementById('modalOverlay').classList.remove('open');
+    showToast(`Caricati ${Object.keys(parsed).length} mesi ✓`);
+    render();
+  };
+  reader.readAsText(file);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
